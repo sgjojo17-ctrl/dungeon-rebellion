@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dungeon Rebellion">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<title>Dungeon Rebellion — Online Card Game</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+:root{--bg:#100d18;--panel:#1b1726;--line:#393047;--gold:#f5bd62;--cream:#f7ead2;--muted:#b9afc8;--red:#ff655f}
+*{box-sizing:border-box}body{margin:0;padding-bottom:env(safe-area-inset-bottom);background:radial-gradient(ellipse at 50% -15%,#44305d 0,#171220 40%,#0d0a12 100%);color:var(--cream);font-family:Inter,system-ui,sans-serif;min-height:100vh}
+button,input{font:inherit}button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}input{font-size:16px}button{cursor:pointer;border:0} .wrap{max-width:1180px;margin:auto;padding:24px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}.brand{display:flex;gap:13px;align-items:center}.sigil{width:48px;height:48px;border:1px solid #b17d47;border-radius:14px;display:grid;place-items:center;font-size:27px;background:linear-gradient(145deg,#382448,#17121f);box-shadow:0 0 28px #8d4c4933}.brand h1{font:800 21px Cinzel,serif;letter-spacing:2px;margin:0}.brand small{color:var(--gold);font-size:10px;letter-spacing:3px;text-transform:uppercase}.pill{border:1px solid var(--line);background:#17121f;padding:9px 12px;border-radius:99px;color:var(--muted);font-size:12px}
+.hero{border:1px solid #51405d;border-radius:24px;padding:28px;background:linear-gradient(115deg,#24172fdd,#191521ee),radial-gradient(circle at 85% 20%,#8e4a45,transparent 40%);position:relative;overflow:hidden;margin-bottom:18px}.hero:after{content:"🐉";position:absolute;font-size:150px;right:3%;top:0;opacity:.16;filter:drop-shadow(0 0 20px #f1a34b);pointer-events:none}.eyebrow{color:var(--gold);font-size:11px;font-weight:800;letter-spacing:3px;text-transform:uppercase}.hero h2{font:800 clamp(26px,4vw,42px) Cinzel,serif;margin:10px 0 8px;max-width:650px}.hero p{color:#d1c5d8;max-width:590px;line-height:1.6;margin:0}.layout{display:grid;grid-template-columns:1.55fr 1fr;gap:18px}.panel{background:#191521eF;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 15px 35px #0002}.panel h3{font:700 15px Cinzel,serif;letter-spacing:1px;margin:0 0 16px}.setup{max-width:620px;margin:0 auto}.row{display:flex;gap:10px;flex-wrap:wrap}.field{flex:1;min-width:130px}.field label{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}.field input{width:100%;padding:13px 14px;background:#100d17;border:1px solid #46394f;border-radius:11px;color:white;outline:none}.field input:focus{border-color:var(--gold)}.btn{padding:13px 17px;border-radius:11px;font-weight:800;transition:.15s}.primary{background:linear-gradient(135deg,#f8c879,#d98946);color:#251629;box-shadow:0 7px 20px #e29a4a22}.primary:hover{transform:translateY(-1px);filter:brightness(1.08)}.secondary{background:#292133;color:var(--cream);border:1px solid #4a3c55}.danger{background:#48232d;color:#ffb7a8;border:1px solid #74313b}.full{width:100%;margin-top:12px}.note{color:var(--muted);font-size:12px;line-height:1.5;margin-top:14px}.hidden{display:none!important}.roomhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}.roomcode{font:800 22px Cinzel,serif;color:var(--gold);letter-spacing:4px}.players{display:flex;gap:9px;flex-wrap:wrap}.player{background:#211b2d;border:1px solid #3f334b;border-radius:13px;padding:12px;min-width:125px;flex:1}.player.active{border-color:var(--gold);box-shadow:inset 0 0 0 1px #f5bd6233}.player .avatar{font-size:23px}.player b{display:block;font-size:13px;margin:4px 0}.player small{color:var(--muted);font-size:11px}.bar{height:5px;background:#3b2e45;border-radius:99px;margin-top:8px;overflow:hidden}.bar span{display:block;height:100%;background:linear-gradient(90deg,#f0a14e,#ffdb8c)}.path{display:flex;gap:6px;align-items:stretch;overflow-x:auto;padding:4px 0 14px}.tile{min-width:76px;flex:1;text-align:center;background:linear-gradient(180deg,#30243c,#1a1523);border:1px solid #493b56;border-radius:12px;padding:12px 7px;position:relative}.tile .num{font-size:10px;color:#a99ab7}.tile .ico{font-size:25px;margin:8px 0}.tile strong{display:block;font-size:10px;line-height:1.25}.tile.past{opacity:.55}.tile.current{border-color:var(--gold);box-shadow:0 0 18px #f5bd6220}.tile.exit{background:linear-gradient(180deg,#57402a,#261b22);border-color:#bd8846}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:20px 0 12px}.sectionhead h3{margin:0}.hand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.card{min-height:178px;border-radius:15px;padding:14px;text-align:left;color:var(--cream);background:linear-gradient(155deg,#31243d,#17131f 78%);border:1px solid #57445f;position:relative;overflow:hidden;display:flex;flex-direction:column;transition:.15s}.card:hover{transform:translateY(-3px);border-color:#c08c5d}.card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 90% 0%,#c46d5333,transparent 42%);pointer-events:none}.card .type{font-size:9px;letter-spacing:2px;color:var(--gold);font-weight:800}.card .art{font-size:38px;margin:9px 0;filter:drop-shadow(0 5px 10px #0008)}.card b{font:700 14px Cinzel,serif;position:relative}.card p{font-size:11px;color:#c5b8ce;line-height:1.45;margin:7px 0 0;position:relative}.card .play{margin-top:auto;padding-top:10px;color:var(--gold);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px}.card.blood{border-color:#6c3543;background:linear-gradient(155deg,#452332,#17131f 78%)}.card.teal{border-color:#35625f;background:linear-gradient(155deg,#203c3c,#17131f 78%)}.card.gold{border-color:#7e6137;background:linear-gradient(155deg,#493821,#17131f 78%)}.card.ember{border-color:#744638;background:linear-gradient(155deg,#4a2926,#17131f 78%)}.card.violet{border-color:#584477;background:linear-gradient(155deg,#342448,#17131f 78%)}.targetrow{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 12px}.target{padding:8px 10px;border:1px solid #51405d;border-radius:9px;background:#211b2b;color:var(--cream);font-size:11px}.target.selected{border-color:var(--gold);color:var(--gold)}.log{display:flex;flex-direction:column;gap:9px}.logline{font-size:12px;line-height:1.45;color:#c8bdd0;border-bottom:1px solid #2c2435;padding-bottom:8px}.logline:last-child{border:0}.status{padding:12px;border-radius:12px;background:#282035;border:1px solid #483653;color:#e6d6ef;font-size:12px;line-height:1.5;margin-bottom:14px}.status.good{border-color:#6e5935;background:#30261d}.status.bad{border-color:#6c3543;background:#301a25}.foot{color:#857990;font-size:11px;text-align:center;margin:24px 0 4px}.winner{text-align:center;padding:24px;border:1px solid #a57c44;border-radius:17px;background:radial-gradient(circle at 50% 0,#6b492f66,#201927)}.winner .crown{font-size:44px}.winner h2{font:800 25px Cinzel,serif;color:var(--gold)}@media(max-width:800px){.layout{grid-template-columns:1fr}.hero:after{right:-30px;top:50px;font-size:110px}.wrap{padding:14px}.hero{padding:22px}.panel{padding:15px}}@media(max-width:440px){.hand{grid-template-columns:1fr 1fr}.card{padding:11px;min-height:170px}.card .art{font-size:31px}.brand h1{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="brand"><div class="sigil">☠</div><div><h1>DUNGEON REBELLION</h1><small>Light · Lies · Legends</small></div></div><div class="pill">⚔️ ONLINE PROTOTYP</div></header>
+<section class="hero"><div class="eyebrow">Ein Spiel um Licht und Verrat</div><h2>Deine Freunde sind nicht deine Verbündeten.</h2><p>Ein dunkler Dungeon. Eine sterbende Fackel. Fiese Karten und nur ein Platz in der Freiheit. Sammle Licht, sabotiere Rivalen und finde den Ausgang zuerst.</p></section>
+<div id="setup" class="panel setup">
+<h3>🕯️ BETRITT DEN DUNGEON</h3>
+<div class="row"><div class="field"><label>DEIN HELDENNAME</label><input id="name" maxlength="18" placeholder="z. B. Nachtklinge" value="Nachtklinge"></div></div>
+<div class="row" style="margin-top:12px"><button class="btn primary" id="create">✦ Neuen Raum erstellen</button><div class="field"><label>RAUMCODE</label><input id="roomCode" maxlength="6" placeholder="ABC123" style="text-transform:uppercase"></div><button class="btn secondary" id="join">Beitreten</button></div>
+<p class="note">Erstelle einen Raum und schicke den sechsstelligen Code an deine Freunde. Für 2–5 Spieler. Diese Version ist ein spielbarer Online-Prototyp mit eigenen Karten und vereinfachten Regeln.</p>
+</div>
+<div id="game" class="hidden">
+<div class="panel" style="margin-bottom:18px">
+<div class="roomhead"><div><div class="eyebrow">Dein geheimer Treffpunkt</div><div class="roomcode" id="codeLabel">------</div></div><button class="btn secondary" id="copy">Code teilen ↗</button></div>
+<div id="status" class="status">Warte auf Mitspieler …</div>
+<div class="sectionhead"><h3>🧙 DIE GRUPPE</h3><span class="pill" id="playerCount">0 / 5</span></div>
+<div id="players" class="players"></div>
+<div id="winner" class="hidden"></div>
+<div id="lobbyActions" style="margin-top:14px"><button class="btn primary full" id="start">Dungeon öffnen (mind. 2 Spieler)</button></div>
+</div>
+<div class="layout">
+<div class="panel"><div class="sectionhead" style="margin-top:0"><h3>🗺️ DER WEG INS DUNKEL</h3><span class="pill" id="turnLabel">Warten</span></div><div id="path" class="path"></div>
+<div class="sectionhead"><h3>🃏 DEINE KARTEN</h3><span class="pill" id="handCount">4 Karten</span></div>
+<div id="targetBox" class="hidden"><div class="note">Wähle einen Rivalen für deine Verratskarte:</div><div id="targets" class="targetrow"></div></div>
+<div id="hand" class="hand"></div>
+<button class="btn primary full" id="explore">🧭 Weiter in den Dungeon (1 Feld)</button>
+<p class="note">Jede Aktion beendet deinen Zug. Licht auf 0 bedeutet: Du wirst Teil der Skelettarmee. Wer zuerst den Ausgang erreicht, gewinnt.</p>
+</div>
+<div class="panel"><h3>📜 CHRONIK DES DUNGEONS</h3><div id="log" class="log"></div><div class="note">Die Ereignisse werden live mit allen Spielern im Raum geteilt.</div></div>
+</div>
+</div>
+<div class="foot">DUNGEON REBELLION · Ein eigenständiger Fantasy-Spielprototyp · Keine Verbindung zum Originalspiel</div>
+</div>
+<script>
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(()=>{}));
+const socket = io({transports:["websocket","polling"]});
+let state = null, selectedTarget = null;
+const $ = id => document.getElementById(id);
+function showError(msg){const el=$("status");el.textContent="⚠️ "+msg;el.className="status bad";}
+$("create").onclick=()=>socket.emit("create",$("name").value||"Abenteurer");
+$("join").onclick=()=>socket.emit("join",{code:$("roomCode").value.trim().toUpperCase(),name:$("name").value||"Abenteurer"});
+$("start").onclick=()=>socket.emit("startGame");
+$("explore").onclick=()=>socket.emit("explore");
+$("copy").onclick=async()=>{
+ const shareText=`Dungeon Rebellion – Raumcode: ${state.code}\nÖffne die Spielseite und tritt mit diesem Code bei.`;
+ try {
+   if (navigator.share) { await navigator.share({title:"Dungeon Rebellion",text:shareText,url:location.href}); }
+   else { await navigator.clipboard.writeText(shareText); $("copy").textContent="✓ Kopiert"; setTimeout(()=>$("copy").textContent="Code teilen ↗",1500); }
+ } catch(e) {
+   try { await navigator.clipboard.writeText(shareText); $("copy").textContent="✓ Kopiert"; setTimeout(()=>$("copy").textContent="Code teilen ↗",1500); }
+   catch(_) { showError("Teile diesen Raumcode manuell: "+state.code); }
+ }
+};
+socket.on("joined",({code})=>{$("setup").classList.add("hidden");$("game").classList.remove("hidden");$("codeLabel").textContent=code});
+socket.on("errorMessage",showError);
+socket.on("state",s=>{state=s;render()});
+function render(){
+ if(!state)return;
+ $("codeLabel").textContent=state.code;
+ $("playerCount").textContent=`${state.players.length} / 5`;
+ const me=state.players.find(p=>p.id===state.myId), current=state.players[state.current];
+ const myTurn=state.started && current && current.id===state.myId && !state.winner && me && me.alive&&!me.legion;
+ $("status").className="status"+(state.winner?" good":"");
+ $("status").textContent=state.winner?`🏆 ${state.winner.name} gewinnt!`:!state.started?`Raum ${state.code} ist offen. Teilt den Code und startet, sobald mindestens zwei Spieler dabei sind.`:me?.legion?"💀 Du gehörst zur Skelettarmee. In dieser Prototyp-Version kannst du keine normalen Züge mehr machen.":myTurn?"✨ Du bist am Zug! Spiele eine Karte oder wage dich ein Feld weiter.":`⏳ ${current?.name||"Ein Spieler"} ist am Zug.`;
+ $("lobbyActions").classList.toggle("hidden",state.started);
+ $("players").innerHTML=state.players.map((p,i)=>`<div class="player ${current&&p.id===current.id&&state.started?'active':''}"><div class="avatar">${p.legion?'💀':['🧙','🗡️','🧝','🧛','🪄'][i%5]}</div><b>${esc(p.name)} ${p.id===state.myId?'(Du)':''}</b><small>${p.legion?'Skelettarmee':p.alive?'🕯️ '+p.light+' Licht':'Ausgeschieden'} · Feld ${p.pos+1}${p.connected?'':' · offline'}</small><div class="bar"><span style="width:${Math.max(0,p.light/6*100)}%"></span></div></div>`).join("");
+ $("path").innerHTML=state.path.map((t,i)=>`<div class="tile ${i<=(me?.pos||0)?'past':''} ${i===(me?.pos||0)?'current':''} ${t.kind==='exit'?'exit':''}"><div class="num">${String(i+1).padStart(2,'0')}</div><div class="ico">${t.icon}</div><strong>${esc(t.name)}</strong></div>`).join("");
+ $("turnLabel").textContent=state.started?(myTurn?'DEIN ZUG':`Zug ${state.turn}`):"Lobby";
+ $("handCount").textContent=`${state.hand.length} Karten`;
+ $("explore").disabled=!myTurn;
+ $("explore").style.opacity=myTurn?1:.5;
+ const rivals=state.players.filter(p=>p.id!==state.myId&&p.alive&&!p.legion);
+ $("targetBox").classList.toggle("hidden",!state.hand.some(c=>["steal","blast","sabotage"].includes(c.action))||!myTurn);
+ $("targets").innerHTML=rivals.map(p=>`<button class="target ${selectedTarget===p.id?'selected':''}" data-target="${p.id}">${esc(p.name)} · 🕯️${p.light}</button>`).join("");
+ document.querySelectorAll("[data-target]").forEach(b=>b.onclick=()=>{selectedTarget=b.dataset.target;render()});
+ $("hand").innerHTML=state.hand.map(c=>`<button class="card ${c.color}" data-card="${c.uid}" ${myTurn?'':'disabled'}><span class="type">${esc(c.type)}</span><span class="art">${c.icon}</span><b>${esc(c.name)}</b><p>${esc(c.desc)}</p><span class="play">Karte spielen ↗</span></button>`).join("");
+ document.querySelectorAll("[data-card]").forEach(b=>b.onclick=()=>{const c=state.hand.find(x=>x.uid===b.dataset.card);if(c&&["steal","blast","sabotage"].includes(c.action)&&!selectedTarget){showError("Wähle zuerst einen Rivalen.");return}socket.emit("playCard",{uid:b.dataset.card,targetId:selectedTarget});selectedTarget=null});
+ $("log").innerHTML=state.log.slice().reverse().map(x=>`<div class="logline">${esc(x)}</div>`).join("");
+ if(state.winner){$("winner").classList.remove("hidden");$("winner").innerHTML=`<div class="winner"><div class="crown">🏆</div><h2>${esc(state.winner.name)}</h2><p>Der Dungeon hat einen Sieger.</p></div>`;$("lobbyActions").classList.add("hidden")}else $("winner").classList.add("hidden");
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+</script>
+</body></html>
