@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#171220">
+<title>Dungeon Rebellion</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;padding:18px;
+ color:#f8ecd8;font-family:system-ui,Arial,sans-serif;
+ background:radial-gradient(ellipse at top,#40264e,#17121f 55%,#0c0911);
+}
+main{max-width:760px;margin:auto}
+header{text-align:center;padding:24px 8px}
+.logo{font-size:48px}
+h1{font-size:clamp(25px,7vw,40px);margin:4px 0;color:#ffc875}
+.subtitle{color:#c5b5d0}
+.panel{
+ background:#1d1728;border:1px solid #51405f;
+ border-radius:18px;padding:20px;margin:14px 0;
+ box-shadow:0 12px 30px #0003;
+}
+h2{font-size:18px;margin:0 0 14px}
+label{display:block;color:#c9b8d2;font-size:13px;margin:12px 0 6px}
+input{
+ width:100%;padding:14px;border-radius:10px;
+ border:1px solid #594768;background:#100d17;
+ color:white;font-size:16px;
+}
+button{
+ border:0;border-radius:11px;padding:14px;
+ font-weight:800;font-size:15px;cursor:pointer;
+}
+.primary{background:linear-gradient(135deg,#ffd38a,#d98843);color:#28182b}
+.secondary{background:#33263f;color:#fff;border:1px solid #665071}
+button:disabled{opacity:.4;cursor:not-allowed}
+.actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}
+.status{
+ background:#2c2238;border-radius:10px;padding:13px;
+ color:#ead9f5;line-height:1.5;overflow-wrap:anywhere;
+}
+.players{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.player{
+ background:#2b2037;border:1px solid #594366;
+ border-radius:12px;padding:13px;overflow-wrap:anywhere;
+}
+.avatar{font-size:27px}
+.player strong{display:block;margin:5px 0}
+.small{font-size:12px;color:#c7b6d1}
+.code{font-size:28px;letter-spacing:5px;color:#ffd17c;font-weight:900}
+.hidden{display:none!important}
+.card{
+ background:linear-gradient(145deg,#41284e,#1a1424);
+ border:1px solid #75577d;border-radius:13px;
+ padding:16px;text-align:center;margin-top:12px;
+}
+.card .art{font-size:36px}
+footer{text-align:center;color:#9585a1;font-size:12px;padding:20px}
+@media(min-width:520px){
+ .actions{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div class="logo">☠️ 🐉 🕯️</div>
+ <h1>DUNGEON REBELLION</h1>
+ <div class="subtitle">Licht · Verrat · Freiheit</div>
+</header>
+
+<section class="panel" id="lobby">
+ <h2>🕯️ Betritt den Dungeon</h2>
+ <label for="name">Dein Heldenname</label>
+ <input id="name" maxlength="18" value="Nachtklinge"
+        placeholder="Dein Name">
+ <div class="actions">
+  <button class="primary" id="create">✦ Raum erstellen</button>
+  <div>
+   <label for="room">Raumcode deiner Freunde</label>
+   <input id="room" maxlength="6" placeholder="ABC123"
+          style="text-transform:uppercase">
+   <button class="secondary" id="join" style="width:100%;margin-top:10px">
+    Raum beitreten
+   </button>
+  </div>
+ </div>
+ <p class="small">Erstelle einen Raum und teile den Code mit deinen
+ Freunden. Für 2–5 Spieler.</p>
+</section>
+
+<section class="panel hidden" id="game">
+ <div class="small">DEIN SPIELRAUM</div>
+ <div class="code" id="code">------</div>
+ <button class="secondary" id="share" style="width:100%;margin:12px 0">
+  📤 Raumcode teilen
+ </button>
+ <div class="status" id="status">Verbinde mit dem Spielserver …</div>
+
+ <h2 style="margin-top:22px">🧙 Deine Gruppe</h2>
+ <div class="players" id="players"></div>
+
+ <div class="card">
+  <div class="art">🚪</div>
+  <h2>Der Dungeon wartet</h2>
+  <p class="small">
+   Sammelt eure Gruppe und bereitet euch auf Monster,
+   magische Karten und Verrat vor!
+  </p>
+ </div>
+</section>
+
+<footer>
+ Dungeon Rebellion · Ein eigenständiger Fantasy-Prototyp
+</footer>
+</main>
+
+<script>
+const socket = io();
+const $ = id => document.getElementById(id);
+let currentCode = "";
+
+function showError(message){
+ $("status").textContent = "⚠️ " + message;
+}
+
+$("create").addEventListener("click",()=>{
+ const name = $("name").value.trim() || "Abenteurer";
+ socket.emit("create",name);
+});
+
+$("join").addEventListener("click",()=>{
+ const code = $("room").value.trim().toUpperCase();
+ const name = $("name").value.trim() || "Abenteurer";
+
+ if(!code){
+  showError("Gib zuerst einen Raumcode ein.");
+  return;
+ }
+ socket.emit("join",{code,name});
+});
+
+socket.on("connect",()=>{
+ $("status").textContent = "✅ Mit dem Server verbunden.";
+});
+
+socket.on("disconnect",()=>{
+ showError("Verbindung unterbrochen. Lade die Seite neu.");
+});
+
+socket.on("connect_error",()=>{
+ showError("Server nicht erreichbar. Prüfe, ob Render online ist.");
+});
+
+socket.on("errorMessage",showError);
+
+socket.on("joined",data=>{
+ currentCode = data.code;
+ $("lobby").classList.add("hidden");
+ $("game").classList.remove("hidden");
+ $("code").textContent = currentCode;
+ $("status").textContent =
+  "Du bist im Raum. Lade deine Freunde mit dem Code ein!";
+});
+
+socket.on("state",data=>{
+ if(data.code) currentCode = data.code;
+ $("code").textContent = currentCode || "------";
+
+ const players = data.players || [];
+ $("players").innerHTML = "";
+
+ players.forEach((player,index)=>{
+  const el = document.createElement("div");
+  el.className = "player";
+
+  const avatar = ["🧙","🗡️","🧝","🧛","🧙‍♀️"][index%5];
+  const icon = document.createElement("div");
+  icon.className = "avatar";
+  icon.textContent = avatar;
+
+  const name = document.createElement("strong");
+  name.textContent = player.name || "Abenteurer";
+
+  const detail = document.createElement("div");
+  detail.className = "small";
+  detail.textContent = "Abenteurer Nr. " + (index+1);
+
+  el.append(icon,name,detail);
+  $("players").appendChild(el);
+ });
+
+ $("status").textContent =
+  players.length + " von maximal 5 Spielern im Raum. " +
+  (players.length < 2
+   ? "Warte auf mindestens einen Freund."
+   : "Eure Gruppe ist bereit!");
+});
+
+$("share").addEventListener("click",async()=>{
+ const text = "Spiele Dungeon Rebellion mit mir! Raumcode: "
+  + currentCode + "\n" + location.href;
+
+ try{
+  if(navigator.share){
+   await navigator.share({
+    title:"Dungeon Rebellion",
+    text:text,
+    url:location.href
+   });
+  }else{
+   await navigator.clipboard.writeText(text);
+   $("status").textContent = "✅ Einladungslink und Code kopiert!";
+  }
+ }catch(error){
+  try{
+   await navigator.clipboard.writeText(text);
+   $("status").textContent = "✅ Einladung kopiert!";
+  }catch(e){
+   showError("Dein Raumcode ist: " + currentCode);
+  }
+ }
+});
+</script>
+</body>
+</html>
